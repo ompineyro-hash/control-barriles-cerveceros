@@ -1,0 +1,1411 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Control de Barriles V52 Elaboración Activa</title>
+<style>
+*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;background:#eef1f4;color:#171717;font-size:14px}
+header{background:#222;color:#fff;padding:12px 18px}header h1{font-size:24px;margin:0 0 3px}
+.wrap{max-width:1120px;margin:auto;padding:10px}.toolbar{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px}
+button{border:0;border-radius:7px;padding:8px 11px;font-weight:700;cursor:pointer;background:#287fbd;color:#fff}
+button.gray{background:#65727e}button.red{background:#a92323}button.green{background:#27824c}
+.panel{display:none;background:#fff;border-radius:10px;padding:12px;margin-bottom:9px;border-left:7px solid #65727e}
+.panel.show{display:block}.base{border-left-color:#397fc2}.work{border-left-color:#3b965b}
+h2{font-size:18px;margin:2px 0 7px}h3{font-size:15px;margin:10px 0 5px}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+label{display:block;font-weight:700;margin:2px 0}input,select{width:100%;padding:7px;border:1px solid #c8c8c8;border-radius:6px;font-size:14px}
+table{width:100%;border-collapse:collapse;margin-top:6px;font-size:13px}th,td{padding:6px;border-bottom:1px solid #e4e4e4;text-align:left}th{background:#f5f5f5}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px}.tabs button{background:#5e7182}.tab{display:none}.tab.show{display:block}
+.muted{color:#5e6670;font-size:13px}.bad{color:#a92323}.ok{color:#237642}.tablewrap{overflow:auto}.actions{display:flex;gap:4px;flex-wrap:wrap}
+@media(max-width:700px){.grid{grid-template-columns:1fr 1fr}}@media(max-width:450px){.grid{grid-template-columns:1fr}}
+
+/* V19: orientación visual por etapa */
+.topnav button[data-panel="mov"], button[data-panel="mov"]{background:#2e8b57!important}
+.topnav button[data-panel="sal"], button[data-panel="sal"]{background:#2878b8!important}
+.topnav button[data-panel="ret"], button[data-panel="ret"]{background:#d97919!important}
+.topnav button[data-panel="base"], button[data-panel="base"]{background:#687580!important}
+
+#mov{border-left-color:#2e8b57!important}
+#sal{border-left-color:#2878b8!important}
+#ret{border-left-color:#d97919!important}
+#base{border-left-color:#687580!important}
+
+body.stage-mov{background:#eef1f3}
+body.stage-sal{background:#eef1f3}
+body.stage-ret{background:#eef1f3}
+body.stage-base{background:#eef1f3}
+
+body.stage-mov [data-panel="mov"],
+body.stage-sal [data-panel="sal"],
+body.stage-ret [data-panel="ret"],
+body.stage-base [data-panel="base"]{
+ outline:3px solid rgba(0,0,0,.20);
+ transform:translateY(-1px);
+ box-shadow:0 2px 5px rgba(0,0,0,.18);
+}
+#ret h3:nth-of-type(1){color:#b45f06}
+#ret h3:nth-of-type(2){color:#b45f06}
+#ret h3:nth-of-type(3){color:#168a8a}
+#ret [data-lavar]{background:#168a8a!important}
+
+
+/* V20: fondo neutro y ubicación clara */
+body{background:#eef1f3!important}
+[data-panel]{opacity:.78;transition:.12s ease}
+body.stage-mov [data-panel="mov"],
+body.stage-sal [data-panel="sal"],
+body.stage-ret [data-panel="ret"],
+body.stage-base [data-panel="base"]{
+ opacity:1!important;
+ outline:4px solid rgba(0,0,0,.20)!important;
+ outline-offset:2px;
+ box-shadow:0 3px 8px rgba(0,0,0,.25)!important;
+ transform:translateY(-1px);
+}
+body.stage-mov #mov{box-shadow:inset 6px 0 0 #2e8b57}
+body.stage-sal #sal{box-shadow:inset 6px 0 0 #2878b8}
+body.stage-ret #ret{box-shadow:inset 6px 0 0 #d97919}
+body.stage-base #base{box-shadow:inset 6px 0 0 #687580}
+
+
+/* V22: solo resaltar dónde está el usuario */
+[data-panel]{
+  background:#7b8790!important;
+  opacity:.72!important;
+  outline:none!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+body.stage-mov [data-panel="mov"]{
+  background:#2e8b57!important;
+  opacity:1!important;
+  outline:4px solid rgba(46,139,87,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.22)!important;
+}
+body.stage-sal [data-panel="sal"]{
+  background:#2878b8!important;
+  opacity:1!important;
+  outline:4px solid rgba(40,120,184,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.22)!important;
+}
+body.stage-ret [data-panel="ret"]{
+  background:#d97919!important;
+  opacity:1!important;
+  outline:4px solid rgba(217,121,25,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.22)!important;
+}
+body.stage-base [data-panel="base"]{
+  background:#5f6b74!important;
+  opacity:1!important;
+  outline:4px solid rgba(95,107,116,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.22)!important;
+}
+
+
+/* V23: los botones inactivos quedan realmente grises */
+button[data-panel="mov"],
+button[data-panel="sal"],
+button[data-panel="ret"],
+button[data-panel="base"]{
+  background:#8a949c!important;
+  opacity:.62!important;
+  outline:none!important;
+  box-shadow:none!important;
+  transform:none!important;
+}
+body.stage-mov button[data-panel="mov"]{
+  background:#2e8b57!important; opacity:1!important;
+  outline:4px solid rgba(46,139,87,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.24)!important;
+}
+body.stage-sal button[data-panel="sal"]{
+  background:#2878b8!important; opacity:1!important;
+  outline:4px solid rgba(40,120,184,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.24)!important;
+}
+body.stage-ret button[data-panel="ret"]{
+  background:#d97919!important; opacity:1!important;
+  outline:4px solid rgba(217,121,25,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.24)!important;
+}
+body.stage-base button[data-panel="base"]{
+  background:#59636b!important; opacity:1!important;
+  outline:4px solid rgba(89,99,107,.22)!important;
+  box-shadow:0 3px 8px rgba(0,0,0,.24)!important;
+}
+
+/* V26: tablero de situación visual */
+.situacion{margin-top:12px;border-top:1px solid #e2e5e8;padding-top:10px}
+.cards{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin:7px 0 10px}
+.card{border:1px solid #d8dde1;border-radius:10px;padding:11px 12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.08);min-height:62px}
+.card:nth-child(1){border-top:4px solid #59636b}.card:nth-child(2){border-top:4px solid #2e8b57}.card:nth-child(3){border-top:4px solid #b58b16}.card:nth-child(4){border-top:4px solid #2878b8}.card:nth-child(5){border-top:4px solid #d97919}
+.card b{display:block;font-size:25px;margin-top:5px;line-height:1}
+.card small{display:block;color:#59636b;font-weight:700;line-height:1.15}
+@media(max-width:800px){.cards{grid-template-columns:repeat(2,1fr)}}
+
+button[data-panel="sit"]{background:#8a949c!important;opacity:.62!important}
+body.stage-sit button[data-panel="sit"]{background:#7a5aa6!important;opacity:1!important;outline:4px solid rgba(122,90,166,.22)!important;box-shadow:0 3px 8px rgba(0,0,0,.24)!important}
+#sit{border-left-color:#7a5aa6!important}
+
+/* V28: subsecciones de Configuración con estilo propio */
+#base .tabs{gap:7px;margin:10px 0 9px}
+#base .tabs button[data-tab]{
+  background:#f7f8f9!important;color:#4d5962!important;border:2px solid #c7cdd2!important;
+  padding:7px 11px;box-shadow:none!important;outline:none!important;transition:.12s ease;
+}
+#base .tabs button[data-tab="fer"].cfg-active{background:#8b5e3c!important;color:#fff!important;border-color:#8b5e3c!important}
+#base .tabs button[data-tab="cer"].cfg-active{background:#b8860b!important;color:#fff!important;border-color:#b8860b!important}
+#base .tabs button[data-tab="env"].cfg-active{background:#268a8a!important;color:#fff!important;border-color:#268a8a!important}
+#base .tabs button[data-tab="bar"].cfg-active{background:#8a3f55!important;color:#fff!important;border-color:#8a3f55!important}
+#base .tabs button[data-tab="cli"].cfg-active{background:#6f5794!important;color:#fff!important;border-color:#6f5794!important}
+
+
+/* V29: alertas por permanencia en comercio */
+.alertgrid{display:grid;grid-template-columns:repeat(4,minmax(120px,1fr));gap:8px;margin:10px 0 14px}
+.alertcard{background:#fff;border:1px solid #d8dde2;border-radius:10px;padding:10px 12px}
+.alertcard small{display:block;color:#5e6871;font-weight:700}
+.alertcard b{display:block;font-size:24px;margin-top:3px}
+.alert-ok{border-left:6px solid #2e8b57}
+.alert-soon{border-left:6px solid #d9a319}
+.alert-late{border-left:6px solid #c94b3c}
+.alert-none{border-left:6px solid #7b8790}
+.badge{display:inline-block;padding:3px 7px;border-radius:999px;font-weight:800;font-size:12px;white-space:nowrap}
+.badge-ok{background:#e7f4ec;color:#247447}
+.badge-soon{background:#fff3cd;color:#8a6712}
+.badge-late{background:#fde8e5;color:#a9362a}
+.badge-none{background:#edf0f2;color:#5e6871}
+tr.row-late{background:#fff4f2}
+tr.row-soon{background:#fffaf0}
+
+
+/* V33: ficha e historial individual */
+.hist-id{cursor:pointer;color:#6f5794;text-decoration:underline;font-weight:800}
+.hist-id:hover{opacity:.78}
+.histbox{background:#faf9fc;border:1px solid #ddd6ea;border-left:6px solid #7a5aa6;border-radius:10px;padding:12px;margin-top:10px}
+.histhead{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px}
+.histcard{background:#fff;border:1px solid #e1dde8;border-radius:8px;padding:8px}
+.histcard small{display:block;color:#68717a;font-weight:700}
+.histcard b{display:block;margin-top:3px}
+.timeline{border-left:3px solid #d8d0e5;margin:8px 0 0 10px;padding-left:16px}
+.tline{position:relative;padding:0 0 12px}
+.tline:before{content:"";position:absolute;left:-22px;top:3px;width:10px;height:10px;border-radius:50%;background:#7a5aa6}
+.tline .fecha{font-weight:800}
+.tline .tipo{font-weight:800;color:#5f477f}
+@media(max-width:800px){.histhead{grid-template-columns:1fr 1fr}}
+
+
+/* V35: ficha flotante, movible y redimensionable */
+#histBarril.histbox{
+  position:fixed!important;
+  z-index:9999;
+  left:50%;
+  top:110px;
+  transform:translateX(-50%);
+  width:min(920px,calc(100vw - 28px));
+  max-width:calc(100vw - 16px);
+  max-height:72vh;
+  overflow:auto;
+  resize:both;
+  min-width:360px;
+  min-height:220px;
+  margin:0!important;
+  background:#fbfaff;
+  border:2px solid #7a5aa6;
+  border-left:8px solid #7a5aa6;
+  border-radius:12px;
+  padding:0 12px 12px!important;
+  box-shadow:0 10px 30px rgba(0,0,0,.28);
+}
+#histBarril .hist-titlebar{
+  position:sticky;
+  top:0;
+  z-index:2;
+  margin:0 -12px 10px;
+  padding:10px 12px;
+  background:#7a5aa6;
+  color:#fff;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:8px;
+  cursor:move;
+  user-select:none;
+  border-radius:8px 8px 0 0;
+}
+#histBarril .hist-titlebar h3{margin:0;font-size:18px}
+#histBarril .hist-titlebar button{background:#5c6570!important;color:#fff;cursor:pointer}
+#histBarril .hist-hint{font-size:12px;opacity:.9;font-weight:400;margin-left:8px}
+@media(max-width:600px){
+ #histBarril.histbox{left:8px!important;right:8px!important;top:85px!important;transform:none!important;width:auto!important;min-width:0!important;resize:none}
+ #histBarril .hist-hint{display:none}
+}
+
+
+/* V37: ciclo visual por etapas */
+.cycle-visual{border:1px solid #ddd6ea;border-radius:12px;background:#fff;margin:10px 0 14px;padding:11px}
+.cycle-visual.current{border:2px solid #7a5aa6;background:#fcfaff}
+.cycle-head{display:flex;justify-content:space-between;gap:10px;align-items:center;margin-bottom:9px}
+.cycle-head b{font-size:16px;color:#5f477f}
+.cycle-head small{color:#68717a;font-weight:700}
+.stage-row{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr auto 1fr;gap:6px;align-items:stretch}
+.stage-arrow{display:flex;align-items:center;font-weight:900;color:#7a8792;font-size:20px;padding:0 1px}
+.stage-card{border:2px solid #d8dde2;border-radius:10px;padding:9px 8px;min-width:0;background:#f7f8f9}
+.stage-card .st-title{font-weight:900;font-size:13px;line-height:1.15}
+.stage-card .st-date{font-weight:800;font-size:12px;margin-top:5px}
+.stage-card .st-detail{font-size:12px;color:#4f5962;margin-top:4px;line-height:1.25;overflow-wrap:anywhere}
+.stage-card.done{opacity:.68;filter:saturate(.72)}
+.stage-card.pending{opacity:.28;filter:saturate(.35)}
+.stage-card.active{opacity:1!important;filter:none!important;box-shadow:0 0 0 4px rgba(0,0,0,.10);transform:translateY(-1px)}
+.stage-clean{border-color:#56a86f;background:#edf8f0;color:#24663a}
+.stage-full{border-color:#d6a11a;background:#fff8df;color:#815f00}
+.stage-shop{border-color:#438ac4;background:#eef6fd;color:#245e8b}
+.stage-return{border-color:#df7e2d;background:#fff1e5;color:#9d4d0c}
+.stage-wash{border-color:#24978f;background:#eaf9f7;color:#126c66}
+.stage-clean.active{background:#dff3e5;border-color:#27824c}
+.stage-full.active{background:#ffeaa4;border-color:#c88f00}
+.stage-shop.active{background:#dceeff;border-color:#2878b8}
+.stage-return.active{background:#ffe1ca;border-color:#d97919}
+.stage-wash.active{background:#d8f3ef;border-color:#168a8a}
+.cycle-note{margin-top:8px;padding:7px 9px;background:#f6f3fa;border-radius:8px;color:#5f5968;font-size:12px}
+@media(max-width:760px){
+ .stage-row{grid-template-columns:1fr;gap:5px}
+ .stage-arrow{justify-content:center;transform:rotate(90deg);height:14px}
+}
+
+
+/* V39: comercio = único estado fuera de fábrica */
+.stage-shop{position:relative}
+.stage-shop:before{
+  content:"FUERA DE FÁBRICA";
+  display:block;
+  font-size:10px;
+  font-weight:900;
+  letter-spacing:.4px;
+  margin-bottom:5px;
+  color:inherit;
+}
+.stage-wash{border-color:#24978f;background:#eaf9f7;color:#126c66}
+.stage-wash.active{background:#d8f3ef;border-color:#168a8a}
+.factory-note{font-size:12px;color:#59636b;margin:6px 0 10px}
+
+
+/* V41: filtros y búsqueda en Situación */
+.sit-tools{display:flex;gap:8px;align-items:end;flex-wrap:wrap;margin:10px 0}
+.sit-search{flex:1 1 260px;min-width:220px}
+.sit-search label{display:block;font-size:12px;font-weight:800;color:#59636b;margin-bottom:3px}
+.sit-search input{width:100%;padding:9px 10px;border:1px solid #cfd6dc;border-radius:9px;font-size:14px}
+.sit-filters{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sit-filters button{background:#e2e6ea!important;color:#38434c!important;opacity:1!important;box-shadow:none!important;outline:none!important;padding:8px 10px}
+.sit-filters button.sit-active{background:#7a5aa6!important;color:white!important}
+.sit-count{font-size:12px;color:#64707a;font-weight:700;margin:2px 0 8px}
+@media(max-width:700px){
+ .sit-tools{display:block}
+ .sit-search{min-width:0}
+ .sit-filters{margin-top:7px}
+ .sit-filters button{width:auto!important}
+}
+
+
+/* V42: lectura rápida de barriles en comercio */
+.commerce-summary{
+  display:grid;
+  grid-template-columns:repeat(3,minmax(0,1fr));
+  gap:8px;
+  margin:8px 0 10px;
+}
+.commerce-card{
+  border:1px solid #d7dde2;
+  border-radius:10px;
+  padding:9px 10px;
+  background:#fff;
+}
+.commerce-card small{display:block;color:#65707a;font-weight:800}
+.commerce-card b{display:block;font-size:20px;margin-top:3px}
+.commerce-ok{border-left:6px solid #2f9d62}
+.commerce-soon{border-left:6px solid #e2ad15}
+.commerce-late{border-left:6px solid #d94b3f}
+.row-soon td{background:#fffaf0}
+.row-late td{background:#fff1ef}
+.commerce-days{font-weight:900}
+.commerce-deadline{font-size:12px;font-weight:800}
+@media(max-width:700px){.commerce-summary{grid-template-columns:1fr}}
+
+
+/* V44: producciones / lotes */
+.prod-box{margin-top:14px;border-top:1px solid #d9dee3;padding-top:10px}
+.prod-head{display:flex;justify-content:space-between;gap:8px;align-items:center;flex-wrap:wrap}
+.prod-head h3{margin:0}
+.prod-badge{display:inline-block;padding:4px 8px;border-radius:999px;background:#eef6ff;color:#245e8b;font-size:12px;font-weight:800}
+
+
+/* V45: fermentador arriba y saldo de litros */
+.ferm-flow{margin:10px 0 14px;padding:10px;border:1px solid #d7dde2;border-radius:11px;background:#f8fafb}
+.ferm-flow h3{margin:0 0 4px}
+.ferm-cards{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:8px}
+.ferm-card{background:white;border:1px solid #d8dde2;border-left:6px solid #2f9d62;border-radius:10px;padding:9px 10px}
+.ferm-card.warn{border-left-color:#e2ad15}.ferm-card.empty{border-left-color:#d94b3f}
+.ferm-card small{display:block;color:#65707a;font-weight:800}
+.ferm-card b{display:block;font-size:19px;margin:3px 0}
+.ferm-card button{padding:6px 8px;font-size:12px;margin-top:5px}
+.ferm-selected{outline:3px solid #2f9d6230}
+@media(max-width:760px){.ferm-cards{grid-template-columns:1fr}}
+
+
+/* V49: flujo visual producción -> envases -> lote -> destino */
+.flow-map{display:grid;grid-template-columns:1fr auto 1fr auto 1fr auto 1fr;gap:8px;align-items:stretch;margin:10px 0 14px}
+.flow-step{border:1px solid #d7dde2;border-radius:12px;background:#fff;padding:10px;min-height:86px}
+.flow-step .flow-num{font-size:12px;font-weight:900;color:#68737d}
+.flow-step h4{margin:3px 0 5px;font-size:16px}
+.flow-step .flow-main{font-size:20px;font-weight:900}
+.flow-step .flow-sub{font-size:12px;color:#65707a;margin-top:3px}
+.flow-fermenter{border-left:6px solid #2f9d62}
+.flow-pack{border-left:6px solid #b79016}
+.flow-lot{border-left:6px solid #7a5aa6}
+.flow-dest{border-left:6px solid #2d80be}
+.flow-arrow{display:flex;align-items:center;justify-content:center;font-size:24px;color:#7d8790}
+@media(max-width:900px){.flow-map{grid-template-columns:1fr}.flow-arrow{transform:rotate(90deg);min-height:18px}}
+
+.flow-step.flow-alert{box-shadow:0 0 0 3px rgba(217,75,63,.14);border-color:#d94b3f}
+.flow-step.flow-ok{box-shadow:0 0 0 3px rgba(47,157,98,.12)}
+.flow-state{margin-top:6px;font-size:12px;font-weight:900}
+.flow-state.ok{color:#1f7a46}
+.flow-state.bad{color:#b42318}
+
+/* V51: ficha del fermentador */
+.ferm-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.ferm-actions button{font-size:12px;padding:6px 8px}
+.ferm-detail-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.38);display:none;z-index:1500}
+.ferm-detail{
+  position:fixed;z-index:1501;display:none;left:50%;top:50%;transform:translate(-50%,-50%);
+  width:min(760px,92vw);max-height:82vh;overflow:auto;background:#fff;border:2px solid #2f9d62;
+  border-radius:14px;box-shadow:0 18px 50px rgba(0,0,0,.28)
+}
+.ferm-detail-head{background:#2f9d62;color:#fff;padding:11px 14px;display:flex;justify-content:space-between;align-items:center;gap:8px}
+.ferm-detail-head h3{margin:0}
+.ferm-detail-body{padding:14px}
+.ferm-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-bottom:12px}
+.ferm-metric{border:1px solid #d8dde2;border-radius:10px;padding:9px;background:#fafbfc}
+.ferm-metric small{display:block;color:#65707a;font-weight:800}
+.ferm-metric b{display:block;font-size:18px;margin-top:3px}
+.ferm-current{border:1px solid #d7dde2;border-left:6px solid #7a5aa6;border-radius:10px;padding:10px;margin-bottom:12px}
+.ferm-current h4{margin:0 0 8px}
+.ferm-current-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.ferm-current-grid label{font-size:12px;font-weight:800;color:#5f6871}
+.ferm-current-grid input,.ferm-current-grid select{width:100%;margin-top:3px}
+@media(max-width:700px){.ferm-metrics,.ferm-current-grid{grid-template-columns:1fr}}
+</style></head>
+<body>
+<header><h1>🍺 Control de Barriles Cerveceros</h1><div>V52 · Elaboración activa y trazabilidad</div></header>
+<div class="wrap">
+<div class="toolbar">
+<button data-panel="mov">▶ Envasado</button>
+<button data-panel="sal">🚚 Salida a cliente</button>
+<button data-panel="ret">↩ Retorno / Lavado</button>
+<button data-panel="sit">📋 Situación</button>
+<button class="gray" data-panel="base">⚙ Base / Configuración</button>
+</div>
+
+<section id="mov" class="panel work show">
+<h2>Nuevo envasado</h2>
+<p class="muted">Elegís el fermentador y la app toma automáticamente la cerveza y el lote de su elaboración activa. Podés repartirla en varios tipos de envase hasta agotarla.</p>
+
+<div class="flow-map">
+  <div class="flow-step flow-fermenter">
+    <div class="flow-num">1</div><h4>Fermentador</h4>
+    <div id="flowFermMain" class="flow-main">—</div>
+    <div id="flowFermSub" class="flow-sub">Elegí el fermentador de origen</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step flow-pack">
+    <div class="flow-num">2</div><h4>Envasado</h4>
+    <div id="flowPackMain" class="flow-main">0 L</div>
+    <div id="flowPackSub" class="flow-sub">Todavía no hay envases preparados</div>
+    <div id="flowPackState" class="flow-state"></div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step flow-lot">
+    <div class="flow-num">3</div><h4>Producción / lote</h4>
+    <div id="flowLotMain" class="flow-main">—</div>
+    <div id="flowLotSub" class="flow-sub">Se completa al confirmar</div>
+  </div>
+  <div class="flow-arrow">→</div>
+  <div class="flow-step flow-dest">
+    <div class="flow-num">4</div><h4>Destino</h4>
+    <div id="flowDestMain" class="flow-main">Fábrica</div>
+    <div id="flowDestSub" class="flow-sub">Luego puede salir a cliente</div>
+  </div>
+</div>
+
+<div class="ferm-flow">
+  <h3>1 · Fermentador disponible</h3>
+  <div class="muted">El saldo baja automáticamente cuando confirmás un envasado. Podés ajustar los litros reales cuando termina la fermentación.</div>
+  <div id="fermCards" class="ferm-cards"></div>
+</div>
+
+<h3>2 · Pasar cerveza a envases</h3>
+<div class="grid">
+<div><label>Fermentador</label><select id="mF"></select></div>
+<div><label>Cerveza / estilo del fermentador</label><input id="mCtxt" readonly placeholder="Se toma de la elaboración activa"></div>
+<div><label>Envase</label><select id="mE"></select></div>
+<div><label>Cantidad</label><input id="mQ" type="number" min="1" value="1"></div>
+<div><label>Fecha de envasado</label><input id="mFecha" type="date"></div>
+<div><label>Lote activo</label><input id="mLotetxt" readonly placeholder="Se toma del fermentador"></div>
+</div>
+<div style="margin-top:8px"><button id="addMov" class="green">+ Agregar al envasado</button></div>
+<div id="movDetail" style="display:none;margin-top:12px">
+<h3>Envasado en preparación</h3>
+<div class="tablewrap"><table><thead><tr><th>Envase</th><th>Cant.</th><th>IDs seleccionados</th><th>Unitario</th><th>Total</th><th>Stock</th><th></th></tr></thead><tbody id="tMov"></tbody></table></div>
+<div class="grid" style="margin-top:9px">
+<div><span class="muted">Volumen calculado</span><br><b id="movLitros" style="font-size:20px">0.00 L</b></div>
+<div><span class="muted">Unidades</span><br><b id="movUnits" style="font-size:20px">0</b></div>
+<div><span class="muted">Control de stock</span><br><b id="movStock">—</b></div>
+<div><span class="muted">Control de cerveza</span><br><b id="movBeer">—</b></div>
+</div>
+<div style="margin-top:9px"><button id="confirmMov" class="green">Confirmar envasado</button> <button id="cancelMov" class="red">Cancelar</button></div>
+</div>
+<div id="lastMov" style="display:none;margin-top:10px;padding:9px;border-radius:7px;background:#eaf7ee;border:1px solid #b9dfc5"></div>
+
+<div class="prod-box">
+  <div class="prod-head">
+    <h3>Producciones / lotes recientes</h3>
+    <span class="prod-badge">Se guarda al confirmar el envasado</span>
+  </div>
+  <p class="muted">Resumen de lo envasado por lote, fermentador y cerveza.</p>
+  <div class="tablewrap">
+    <table>
+      <thead><tr><th>Fecha</th><th>Lote</th><th>Fermentador</th><th>Cerveza</th><th>Envases</th><th>Volumen</th></tr></thead>
+      <tbody id="tProd"></tbody>
+    </table>
+  </div>
+</div>
+</section>
+
+
+<section id="sal" class="panel work">
+<h2>Salida de barriles llenos</h2>
+<p class="muted">Elegí un barril lleno, el cliente y la fecha de salida. Desde ese momento queda registrado en qué comercio está.</p>
+<div class="grid">
+<div><label>Barril lleno</label><select id="sBar"></select></div>
+<div><label>Cliente</label><select id="sCli"></select></div>
+<div><label>Fecha de salida</label><input id="sFecha" type="date"></div>
+<div><label>Observaciones</label><input id="sObs" placeholder="Opcional"></div>
+</div>
+<div style="margin-top:8px"><button id="sendBar" class="green">Confirmar salida</button></div>
+<h3>Barriles actualmente en comercios</h3>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Modelo</th><th>Cliente</th><th>Salida</th><th>Días</th><th>Observaciones</th></tr></thead><tbody id="tSal"></tbody></table></div>
+</section>
+
+
+<section id="ret" class="panel work">
+<h2>Retorno y lavado de barriles</h2>
+<p class="muted">Primero registrá el retorno desde el comercio. Después del lavado, el barril vuelve a quedar limpio y disponible.</p>
+
+<h3>1 · Registrar retorno</h3>
+<div class="grid">
+<div><label>Barril en comercio</label><select id="rBar"></select></div>
+<div><label>Fecha de retorno</label><input id="rFecha" type="date"></div>
+<div><label>Observaciones</label><input id="rObs" placeholder="Opcional"></div>
+</div>
+<div style="margin-top:8px"><button id="retBar" class="green">Confirmar retorno</button></div>
+
+<h3>2 · Pendientes de lavado</h3>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Modelo</th><th>Cliente anterior</th><th>Retorno</th><th>Días en comercio</th><th>Acción</th></tr></thead><tbody id="tLav"></tbody></table></div>
+
+<h3>Historial reciente de lavados</h3>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Modelo</th><th>Último lavado</th><th>Estado</th></tr></thead><tbody id="tLavHist"></tbody></table></div>
+</section>
+
+
+<section id="sit" class="panel">
+<h2>Situación general de barriles</h2>
+<p class="muted">Vista rápida del padrón completo. Cada barril aparece según su estado actual.</p>
+<div class="cards">
+<div class="card"><small>Total registrados</small><b id="sitTotal">0</b></div>
+<div class="card"><small>Limpios / disponibles</small><b id="sitLimpios">0</b></div>
+<div class="card"><small>Llenos en fábrica</small><b id="sitLlenos">0</b></div>
+<div class="card"><small>En comercios</small><b id="sitComercio">0</b></div>
+<div class="card"><small>Pendientes de lavado</small><b id="sitLavado">0</b></div>
+</div>
+
+<div class="alertgrid">
+  <div class="alertcard alert-ok"><small>En plazo</small><b id="sitEnPlazo">0</b></div>
+  <div class="alertcard alert-soon"><small>Próximos a vencer</small><b id="sitProx">0</b></div>
+  <div class="alertcard alert-late"><small>Demorados</small><b id="sitDem">0</b></div>
+  <div class="alertcard alert-none"><small>Sin plazo definido</small><b id="sitSinPlazo">0</b></div>
+</div>
+
+<div class="sit-tools">
+  <div class="sit-search">
+    <label>Buscar barril o cliente</label>
+    <input id="sitBuscar" placeholder="Ej.: B002 o BAR PRUEBA">
+  </div>
+  <div class="sit-filters">
+    <button type="button" data-sitfilter="Todos" class="sit-active">Todos</button>
+    <button type="button" data-sitfilter="Limpio / disponible">Limpios</button>
+    <button type="button" data-sitfilter="Lleno">Llenos</button>
+    <button type="button" data-sitfilter="En comercio">En comercio</button>
+    <button type="button" data-sitfilter="Retornado / pendiente de lavado">Retornados / sucios</button>
+  </div>
+</div>
+<div id="sitMostrando" class="sit-count"></div>
+<div id="commerceSummary" class="commerce-summary">
+  <div class="commerce-card commerce-ok"><small>En plazo</small><b id="commerceOk">0</b></div>
+  <div class="commerce-card commerce-soon"><small>Próximos a vencer</small><b id="commerceSoon">0</b></div>
+  <div class="commerce-card commerce-late"><small>Demorados</small><b id="commerceLate">0</b></div>
+</div>
+<div class="tablewrap"><table><thead><tr><th>ID</th><th>Modelo</th><th>Cerveza</th><th>Lote</th><th>Envasado</th><th>Estado</th><th>Cliente / ubicación</th><th>Días afuera</th><th>Plazo</th><th>Control</th><th>Último movimiento</th><th>Observaciones</th></tr></thead><tbody id="tSit"></tbody></table></div>
+<div id="histBarril" class="histbox" style="display:none"></div>
+
+</section>
+
+<section id="base" class="panel base">
+<h2>Base / Configuración inicial</h2>
+<p class="muted">Como en FinanzaSimple: se carga una vez, queda guardado y luego se selecciona desde las listas de movimientos.</p>
+<div class="tabs">
+<button data-tab="fer">Fermentadores</button>
+<button data-tab="cer">Cervezas / Productos</button>
+<button data-tab="env">Envases</button><button data-tab="bar">Barriles individuales</button><button data-tab="cli">Clientes</button>
+</div>
+
+<div id="fer" class="tab show">
+<h3>Fermentadores</h3>
+<div class="grid"><div><label>Nombre</label><input id="fNom" placeholder="Ej.: F1"></div><div><label>Capacidad de referencia (L)</label><input id="fCap" type="number" min="0"></div></div>
+<button id="addF">Agregar</button>
+<div class="tablewrap"><table><thead><tr><th>Nombre</th><th>Capacidad</th><th>Acciones</th></tr></thead><tbody id="tF"></tbody></table></div>
+</div>
+
+<div id="cer" class="tab">
+<h3>Cervezas / Productos</h3>
+<div class="grid"><div><label>Nombre</label><input id="cNom" placeholder="Ej.: IPA"></div><div><label>Detalle opcional</label><input id="cDet" placeholder="Ej.: ARGENTA"></div></div>
+<button id="addC">Agregar</button>
+<div class="tablewrap"><table><thead><tr><th>Producto</th><th>Detalle</th><th>Acciones</th></tr></thead><tbody id="tC"></tbody></table></div>
+</div>
+
+<div id="env" class="tab">
+<h3>Envases</h3>
+<div class="grid">
+<div><label>Tipo</label><select id="eTipo"><option>Barril</option><option>Lata</option><option>Botella</option><option>Otro</option></select></div>
+<div><label>Modelo / formato (opcional)</label><input id="eNom" placeholder="Ej.: Común, Slim. En latas dejar vacío"></div>
+<div><label>Capacidad</label><input id="eCap" type="number" min="0" step=".001"></div>
+<div><label>Unidad</label><select id="eU"><option value="L">L</option><option value="ml">ml</option></select></div>
+<div><label>Tara (g)</label><input id="eTara" type="number" min="0"></div>
+<div><label>Stock inicial</label><input id="eStock" type="number" min="0" value="0"></div>
+</div>
+<div class="muted" style="margin:5px 0 8px">La capacidad se carga una sola vez en “Capacidad”. Ej.: para una lata de 473 ml, dejá Modelo/formato vacío y cargá 473 + ml.</div>
+<button id="addE">Agregar</button>
+<div class="tablewrap"><table><thead><tr><th>Tipo</th><th>Formato</th><th>Capacidad</th><th>Tara</th><th>Stock</th><th>Acciones</th></tr></thead><tbody id="tE"></tbody></table></div>
+</div>
+
+<div id="bar" class="tab">
+<h3>Barriles individuales</h3>
+<p class="muted">Cada barril se carga una sola vez y conserva siempre su ID. No se borra al dejar de usarse: se marca como “Fuera de servicio”.</p>
+<div class="grid">
+<div><label>ID único</label><input id="bId" placeholder="Ej.: B001"></div>
+<div><label>Modelo / tipo de barril</label><select id="bModelo"></select></div>
+<div><label>Tara propia (g)</label><input id="bTara" type="number" min="0"></div>
+<div><label>Fecha de alta</label><input id="bFecha" type="date"></div>
+<div style="grid-column:span 2"><label>Observaciones</label><input id="bObs" placeholder="Opcional"></div>
+</div>
+<button id="addB">Agregar barril</button>
+
+<div class="grid" style="margin-top:10px">
+<div><span class="muted">Total registrados</span><br><b id="bTotal" style="font-size:20px">0</b></div>
+<div><span class="muted">Limpios / disponibles</span><br><b id="bDisp" style="font-size:20px">0</b></div>
+<div><span class="muted">En uso / otros estados</span><br><b id="bUso" style="font-size:20px">0</b></div>
+<div><span class="muted">Fuera de servicio</span><br><b id="bBaja" style="font-size:20px">0</b></div>
+</div>
+
+<div class="tablewrap"><table>
+<thead><tr><th>ID</th><th>Modelo</th><th>Capacidad</th><th>Tara propia</th><th>Estado</th><th>Alta</th><th>Observaciones</th><th>Acciones</th></tr></thead>
+<tbody id="tB"></tbody>
+</table></div>
+</div>
+
+<div id="cli" class="tab">
+<h3>Clientes</h3>
+<p class="muted">Se cargan una sola vez y luego se eligen desde los movimientos de salida. El plazo habitual alimenta automáticamente las alertas de Situación.</p>
+<div class="grid">
+<div><label>Cliente / comercio</label><input id="clNom" placeholder="Ej.: Cervecería Centro"></div>
+<div><label>Contacto</label><input id="clCon" placeholder="Opcional"></div>
+<div><label>Teléfono / WhatsApp</label><input id="clTel" placeholder="Opcional"></div>
+<div><label>Dirección</label><input id="clDir" placeholder="Ej.: Av. San Martín 123"></div>
+<div><label>Localidad / ciudad</label><input id="clLoc" placeholder="Ej.: Junín de los Andes"></div>
+<div><label>Referencia para encontrarlo</label><input id="clRef" placeholder="Ej.: Frente a la plaza"></div>
+<div><label>Ubicación / enlace de Google Maps</label><input id="clMap" placeholder="Opcional"></div>
+<div><label>Plazo habitual de devolución (días)</label><input id="clPlazo" type="number" min="0" step="1" placeholder="Ej.: 15"></div>
+<div><label>Observaciones</label><input id="clObs" placeholder="Opcional"></div>
+</div>
+<div id="clEditMsg" class="muted" style="display:none;margin:6px 0"><b>Editando cliente existente</b> · modificá los datos y guardá.</div><button id="addCl">Agregar cliente</button> <button id="cancelClEdit" class="gray" style="display:none">Cancelar modificación</button>
+<div class="tablewrap"><table><thead><tr><th>Cliente</th><th>Contacto</th><th>Teléfono</th><th>Dirección / localidad</th><th>Referencia</th><th>Plazo</th><th>Observaciones</th><th>Acciones</th></tr></thead><tbody id="tCl"></tbody></table></div>
+</div>
+
+</section>
+</div>
+
+<div id="fermBackdrop" class="ferm-detail-backdrop"></div>
+<div id="fermDetail" class="ferm-detail">
+  <div class="ferm-detail-head">
+    <h3 id="fermDetailTitle">Fermentador</h3>
+    <button id="fermClose" class="gray">Cerrar</button>
+  </div>
+  <div class="ferm-detail-body">
+    <div class="ferm-metrics">
+      <div class="ferm-metric"><small>Capacidad de referencia</small><b id="fdCap">—</b></div>
+      <div class="ferm-metric"><small>Carga real actual</small><b id="fdCarga">—</b></div>
+      <div class="ferm-metric"><small>Disponible ahora</small><b id="fdSaldo">—</b></div>
+      <div class="ferm-metric"><small>Ya envasado de esta carga</small><b id="fdEnvasado">—</b></div>
+      <div class="ferm-metric"><small>Cerveza / estilo</small><b id="fdCerveza">—</b></div>
+      <div class="ferm-metric"><small>Lote actual</small><b id="fdLote">—</b></div>
+      <div class="ferm-metric"><small>Estado del fermentador</small><b id="fdEstado">—</b></div>
+    </div>
+
+    <div class="ferm-current">
+      <h4>Cargar / actualizar producción actual</h4>
+      <div class="ferm-current-grid">
+        <div><label>Litros reales cargados</label><input id="fdInputLitros" type="number" min="0" step="0.001"></div>
+        <div><label>Cerveza / estilo</label><select id="fdInputCerveza"></select></div>
+        <div><label>Lote / producción</label><input id="fdInputLote" placeholder="Ej.: IPA0903"></div>
+        <div><label>Fecha de carga</label><input id="fdInputFecha" type="date"></div>
+      </div>
+      <div style="margin-top:8px"><button id="fdGuardar" class="secondary">Guardar nueva elaboración</button>
+      <button id="fdLavar" class="gray" style="margin-left:6px">Registrar lavado</button></div>
+      <div class="muted" style="margin-top:5px">La cerveza y el lote quedan ligados a este fermentador hasta que la elaboración se termine.</div>
+    </div>
+
+    <h4>Historial de producciones envasadas desde este fermentador</h4>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Fecha</th><th>Lote</th><th>Cerveza</th><th>Envases</th><th>Volumen</th></tr></thead>
+        <tbody id="fdHist"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+
+function fmtLitros(n){
+  const v=Number(n||0);
+  return v.toLocaleString('es-AR',{minimumFractionDigits:0,maximumFractionDigits:3});
+}
+
+const $=x=>document.getElementById(x),KEY='barrilesV9base';
+let s={f:[],c:[],e:[],b:[],cl:[],prod:[]};try{const x=JSON.parse(localStorage.getItem(KEY)||'null');if(x)s=x}catch(e){};if(!Array.isArray(s.b))s.b=[];if(!Array.isArray(s.cl))s.cl=[];if(!Array.isArray(s.prod))s.prod=[];
+(s.f||[]).forEach(f=>{
+  if(f.saldoActual===undefined||f.saldoActual===null){
+    const usado=(s.prod||[]).filter(p=>p.fermentador===f.n).reduce((a,p)=>a+Number(p.litros||0),0);
+    f.saldoActual=Math.max(0,Number((Number(f.cap||0)-usado).toFixed(3)));
+  }
+});
+(s.f||[]).forEach(f=>{
+  if(f.cargaReal===undefined||f.cargaReal===null) f.cargaReal=Number(f.saldoActual||0);
+  if(f.envasadoActual===undefined||f.envasadoActual===null) f.envasadoActual=Math.max(0,Number((f.cargaReal-Number(f.saldoActual||0)).toFixed(3)));
+  if(f.cervezaActual===undefined) f.cervezaActual='';
+  if(f.loteActual===undefined) f.loteActual='';
+  if(f.fechaCarga===undefined) f.fechaCarga='';
+  if(f.estadoFerm===undefined) f.estadoFerm=Number(f.saldoActual||0)>0?'Con elaboración':'Disponible / limpio';
+  if(f.histElab===undefined) f.histElab=[];
+
+});
+const save=()=>localStorage.setItem(KEY,JSON.stringify(s));
+function ensureHist(b){
+ if(!Array.isArray(b.hist))b.hist=[];
+ if(!b.histBaseMigrada){
+   const addUnique=(tipo,fecha,detalle)=>{
+     if(!fecha)return;
+     if(!b.hist.some(e=>e.tipo===tipo&&e.fecha===fecha))b.hist.push({tipo,fecha,detalle:detalle||''});
+   };
+   addUnique('Envasado',b.fechaLlenado,[b.cerveza,b.lote?('Lote '+b.lote):'',b.fermentador].filter(Boolean).join(' · '));
+   addUnique('Salida a cliente',b.salida,[b.cliente,b.salidaObs].filter(Boolean).join(' · '));
+   addUnique('Retorno',b.retorno,[b.cliente,b.retornoObs].filter(Boolean).join(' · '));
+   addUnique('Lavado',b.ultimoLavado,'Barril limpio y disponible');
+   b.histBaseMigrada=true;
+ }
+ return b.hist;
+}
+function addHist(b,tipo,fecha,detalle){
+ const h=ensureHist(b);
+ const f=fecha||new Date().toISOString().slice(0,10);
+ if(!h.some(e=>e.tipo===tipo&&e.fecha===f&&e.detalle===(detalle||''))){
+   h.push({tipo,fecha:f,detalle:detalle||''});
+ }
+}
+function setStage(stage){
+ document.body.classList.remove('stage-mov','stage-sal','stage-ret','stage-sit','stage-base');
+ document.body.classList.add('stage-'+stage);
+}
+document.querySelectorAll('[data-panel]').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('.panel').forEach(x=>x.classList.remove('show'));
+ $(b.dataset.panel).classList.add('show');
+ setStage(b.dataset.panel);
+}));
+setStage('mov');
+function setConfigTab(tab){
+ document.querySelectorAll('.tab').forEach(x=>x.classList.remove('show'));
+ $(tab).classList.add('show');
+ document.querySelectorAll('#base [data-tab]').forEach(x=>x.classList.toggle('cfg-active',x.dataset.tab===tab));
+}
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>setConfigTab(b.dataset.tab)));
+setConfigTab('fer');
+function acts(kind,i){return `<div class="actions"><button class="gray" data-edit="${kind}:${i}">Modificar</button><button class="red" data-del="${kind}:${i}">Eliminar</button></div>`}
+let sitFiltro='Todos';
+let sitTexto='';
+function initSitTools(){
+  const q=$('sitBuscar');
+  if(q && !q.dataset.ready){
+    q.dataset.ready='1';
+    q.addEventListener('input',()=>{sitTexto=q.value.trim().toLowerCase();render();});
+  }
+  document.querySelectorAll('[data-sitfilter]').forEach(btn=>{
+    if(btn.dataset.ready)return;
+    btn.dataset.ready='1';
+    btn.addEventListener('click',()=>{
+      sitFiltro=btn.dataset.sitfilter;
+      document.querySelectorAll('[data-sitfilter]').forEach(x=>x.classList.toggle('sit-active',x.dataset.sitfilter===sitFiltro));
+      render();
+    });
+  });
+}
+function render(){
+ $('tCl').innerHTML=s.cl.map((x,i)=>`<tr><td><b>${x.n}</b></td><td>${x.c||'—'}</td><td>${x.tel||'—'}</td><td>${[x.dir,x.loc].filter(Boolean).join(' · ')||'—'}${x.map?'<br><small>Maps cargado</small>':''}</td><td>${x.ref||'—'}</td><td>${x.plazo?x.plazo+' días':'—'}</td><td>${x.obs||'—'}</td><td><div class="actions"><button class="gray" data-cledit="${i}">Modificar</button><button class="red" data-cldel="${i}">Eliminar</button></div></td></tr>`).join('');
+ $('sCli').innerHTML='<option value="">Elegir...</option>'+s.cl.map((x,i)=>`<option value="${i}">${x.n}</option>`).join('');
+ $('sBar').innerHTML='<option value="">Elegir...</option>'+s.b.map((b,i)=>({b,i})).filter(o=>o.b.estado==='Lleno').map(o=>{const x=s.e[o.b.ei];return `<option value="${o.i}">${o.b.id} · ${x?envLabel(x):'Barril'}</option>`}).join('');
+ const hoy=new Date();hoy.setHours(0,0,0,0);
+ $('rBar').innerHTML='<option value="">Elegir...</option>'+s.b.map((b,i)=>({b,i})).filter(o=>o.b.estado==='En comercio').map(o=>{const x=s.e[o.b.ei],cl=s.cl[o.b.clienteIdx];return `<option value="${o.i}">${o.b.id} · ${x?envLabel(x):'Barril'} · ${cl?cl.n:(o.b.cliente||'')}</option>`}).join('');
+ $('tLav').innerHTML=s.b.map((b,i)=>({b,i})).filter(o=>o.b.estado==='Retornado / pendiente de lavado').map(o=>{const b=o.b,x=s.e[b.ei],cl=s.cl[b.clienteIdx];let dias='—';if(b.salida&&b.retorno){const a=new Date(b.salida+'T00:00:00'),r=new Date(b.retorno+'T00:00:00');dias=Math.max(0,Math.floor((r-a)/86400000));}return `<tr><td><b>${b.id}</b></td><td>${x?envLabel(x):'—'}</td><td>${cl?cl.n:(b.cliente||'—')}</td><td>${b.retorno||'—'}</td><td><b>${dias}</b></td><td><button class="green" data-lavar="${o.i}">Marcar lavado</button></td></tr>`}).join('');
+ $('tLavHist').innerHTML=s.b.filter(b=>b.ultimoLavado).map(b=>{const x=s.e[b.ei];return `<tr><td><b>${b.id}</b></td><td>${x?envLabel(x):'—'}</td><td>${b.ultimoLavado}</td><td>${b.estado}</td></tr>`}).join('');
+ document.querySelectorAll('[data-lavar]').forEach(btn=>btn.onclick=()=>{const b=s.b[+btn.dataset.lavar];if(!b||b.estado!=='Retornado / pendiente de lavado')return;const f=prompt('Fecha de lavado (AAAA-MM-DD):',new Date().toISOString().slice(0,10));if(f===null)return;if(!/^\d{4}-\d{2}-\d{2}$/.test(f))return alert('Ingresá la fecha como AAAA-MM-DD.');ensureHist(b);b.ultimoLavado=f;b.estado='Limpio / disponible';addHist(b,'Lavado',f,'Barril limpio y disponible');save();render();alert(`${b.id} quedó limpio y disponible.`);});
+ $('tSal').innerHTML=s.b.filter(b=>b.estado==='En comercio').map(b=>{const x=s.e[b.ei],cl=s.cl[b.clienteIdx],fd=b.salida?new Date(b.salida+'T00:00:00'):hoy,dias=Math.max(0,Math.floor((hoy-fd)/86400000));return `<tr><td><b>${b.id}</b></td><td>${x?envLabel(x):'—'}</td><td>${cl?cl.n:(b.cliente||'—')}</td><td>${b.salida||'—'}</td><td><b>${dias}</b></td><td>${b.salidaObs||'—'}</td></tr>`}).join('');
+ $('sitTotal').textContent=s.b.length;
+ $('sitLimpios').textContent=s.b.filter(b=>b.estado==='Limpio / disponible').length;
+ $('sitLlenos').textContent=s.b.filter(b=>b.estado==='Lleno').length;
+ $('sitComercio').textContent=s.b.filter(b=>b.estado==='En comercio').length;
+ $('sitLavado').textContent=s.b.filter(b=>b.estado==='Retornado / pendiente de lavado').length;
+ let enPlazo=0,prox=0,dem=0,sinPlazo=0;
+ const controlTiempo=(b,cl,contar=true)=>{
+   if(b.estado!=='En comercio')return {dias:'—',plazo:'—',txt:'—',cls:'none'};
+   const fd=b.salida?new Date(b.salida+'T00:00:00'):hoy;
+   const dias=Math.max(0,Math.floor((hoy-fd)/86400000));
+   const p=cl&&cl.plazo!==''&&cl.plazo!=null?Number(cl.plazo):NaN;
+   if(!Number.isFinite(p)||p<=0){if(contar)sinPlazo++;return {dias,plazo:'—',txt:'Sin plazo',cls:'none'};}
+   if(dias>p){if(contar)dem++;return {dias,plazo:p+' días',txt:'Demorado '+(dias-p)+' d',cls:'late'};}
+   const faltan=p-dias;
+   if(faltan<=3){if(contar)prox++;return {dias,plazo:p+' días',txt:faltan===0?'Vence hoy':'Faltan '+faltan+' d',cls:'soon'};}
+   if(contar)enPlazo++;return {dias,plazo:p+' días',txt:'En plazo',cls:'ok'};
+ };
+ if(window.fermCards){
+   const sel=$('mF')?.value||'';
+   fermCards.innerHTML=(s.f||[]).map((f,i)=>{
+     const saldo=Number(f.saldoActual||0),ref=Number(f.cap||0),pct=ref>0?saldo/ref:0;
+     const cls=saldo<=0?'empty':pct<0.25?'warn':'';
+     return `<div class="ferm-card ${cls} ${sel===f.n?'ferm-selected':''}">
+       <small>${f.n}</small>
+       <b>${fmtLitros(saldo)} L disponibles</b>
+       <div class="muted">Referencia: ${fmtLitros(ref)} L</div>
+       <div class="muted">${f.cervezaActual?`${f.cervezaActual} · Lote ${f.loteActual||'—'}`:(f.estadoFerm||'Sin elaboración activa')}</div>
+       <div class="ferm-actions">
+         <button class="gray" data-fdetail="${i}">Ver ficha</button>
+         <button class="gray" data-fsaldo="${i}">Ajustar litros</button>
+       </div>
+     </div>`;
+   }).join('')||'<div class="muted">Todavía no hay fermentadores cargados.</div>';
+   document.querySelectorAll('[data-fsaldo]').forEach(btn=>btn.onclick=()=>{
+     const f=s.f[+btn.dataset.fsaldo];
+     const v=prompt(`Litros reales disponibles en ${f.n}:`,Number(f.saldoActual||0));
+     if(v===null)return;
+     const n=Number(String(v).replace(',','.'));
+     if(!Number.isFinite(n)||n<0)return alert('Ingresá una cantidad válida.');
+     f.saldoActual=Number(n.toFixed(3));
+     if(Number(f.envasadoActual||0)===0)f.cargaReal=f.saldoActual;
+     save();render();
+   });
+ }
+ if(window.tProd){
+   const rows=(s.prod||[]).slice(0,12);
+   tProd.innerHTML=rows.length?rows.map(p=>`<tr>
+     <td>${p.fecha||'—'}</td>
+     <td><b>${p.lote||'—'}</b></td>
+     <td>${p.fermentador||'—'}</td>
+     <td>${p.cerveza||'—'}</td>
+     <td><b>${p.unidades||0}</b></td>
+     <td><b>${fmtLitros(p.litros||0)} L</b></td>
+   </tr>`).join(''):'<tr><td colspan="6" class="muted">Todavía no hay producciones registradas en esta versión.</td></tr>';
+ }
+ initSitTools();
+ const visibles=s.b.filter(b=>{
+   if(sitFiltro!=='Todos' && b.estado!==sitFiltro)return false;
+   if(!sitTexto)return true;
+   const cl=s.cl[b.clienteIdx];
+   const cliente=(cl?cl.n:(b.cliente||'')).toLowerCase();
+   return String(b.id||'').toLowerCase().includes(sitTexto) || cliente.includes(sitTexto);
+ });
+ $('sitMostrando').textContent=`Mostrando ${visibles.length} de ${s.b.length} barriles${sitFiltro!=='Todos'?' · '+sitFiltro:''}${sitTexto?' · búsqueda: '+$('sitBuscar').value:''}`;
+
+ const comercio=s.b.filter(b=>b.estado==='En comercio');
+ let cOk=0,cSoon=0,cLate=0;
+ comercio.forEach(b=>{
+   const cl=s.cl[b.clienteIdx],ct=controlTiempo(b,cl,false);
+   if(ct.cls==='late')cLate++;
+   else if(ct.cls==='soon')cSoon++;
+   else if(ct.cls==='ok')cOk++;
+ });
+ $('commerceOk').textContent=cOk;
+ $('commerceSoon').textContent=cSoon;
+ $('commerceLate').textContent=cLate;
+ $('commerceSummary').style.display=(sitFiltro==='En comercio'||sitFiltro==='Todos')?'grid':'none';
+
+ $('tSit').innerHTML=visibles.map(b=>{
+   const x=s.e[b.ei],cl=s.cl[b.clienteIdx];
+   let ubic='Fábrica';
+   if(b.estado==='En comercio')ubic=cl?cl.n:(b.cliente||'Comercio');
+   if(b.estado==='Fuera de servicio')ubic='Fuera de servicio';
+   let mov=b.ultimoLavado||b.retorno||b.salida||b.fecha||'—';
+   const ct=controlTiempo(b,cl);
+   const cerveza=b.cerveza||'—',lote=b.lote||'—',fenv=b.fechaLlenado||'—';
+   const diasCell=b.estado==='En comercio'?`<span class="commerce-days">${ct.dias}</span>`:ct.dias;
+   const plazoCell=b.estado==='En comercio'?`<span class="commerce-deadline">${ct.plazo}</span>`:ct.plazo;
+   return `<tr class="${ct.cls==='late'?'row-late':ct.cls==='soon'?'row-soon':''}">
+     <td><span class="hist-id" data-hist="${b.id}">${b.id}</span></td><td>${x?envLabel(x):'—'}</td>
+     <td><b>${cerveza}</b></td><td><b>${lote}</b></td><td>${fenv}</td><td>${b.estado}</td><td>${ubic}</td>
+     <td>${diasCell}</td><td>${plazoCell}</td>
+     <td>${ct.txt==='—'?'—':`<span class="badge badge-${ct.cls}">${ct.txt}</span>`}</td>
+     <td>${mov}</td><td>${b.obs||'—'}</td></tr>`;
+ }).join('');
+ $('sitEnPlazo').textContent=enPlazo;
+ $('sitProx').textContent=prox;
+ $('sitDem').textContent=dem;
+ 
+ $('sitSinPlazo').textContent=sinPlazo;
+ document.querySelectorAll('[data-hist]').forEach(el=>el.onclick=()=>{
+   const b=s.b.find(z=>z.id===el.dataset.hist); if(!b)return;
+   const x=s.e[b.ei],cl=s.cl[b.clienteIdx];
+   const ubic=b.estado==='En comercio'?(cl?cl.n:(b.cliente||'Comercio')):'Fábrica';
+   ensureHist(b);save();
+   const lista=(b.hist||[]).slice();
+   $('histBarril').style.display='block';
+   $('histBarril').innerHTML=`
+     <div class="hist-titlebar" id="histDrag">
+       <h3>🍺 Ficha de ${b.id}<span class="hist-hint">Arrastrá esta barra para mover la ventana</span></h3>
+       <button class="gray" id="cerrarHist">Cerrar ficha</button>
+     </div>
+     <div class="histhead">
+       <div class="histcard"><small>Modelo</small><b>${x?envLabel(x):'—'}</b></div>
+       <div class="histcard"><small>Estado actual</small><b>${b.estado}</b></div>
+       <div class="histcard"><small>Ubicación actual</small><b>${ubic}</b></div>
+       <div class="histcard"><small>Tara</small><b>${b.tara?b.tara+' g':'—'}</b></div>
+       <div class="histcard"><small>Cerveza actual</small><b>${b.cerveza||'—'}</b></div>
+       <div class="histcard"><small>Lote actual</small><b>${b.lote||'—'}</b></div>
+       <div class="histcard"><small>Fermentador</small><b>${b.fermentador||'—'}</b></div>
+       <div class="histcard"><small>Alta</small><b>${b.fecha||'—'}</b></div>
+       <div class="histcard"><small>Ciclos registrados</small><b>${lista.filter(e=>e.tipo==='Envasado').length}</b></div>
+     </div>
+     <h3>Ciclos del barril</h3><div class="factory-note">Solo <b>En comercio</b> representa al barril fuera de la fábrica; ahí se controla cliente y tiempo de permanencia.</div>
+     ${(()=>{
+       if(!lista.length)return '<div class="muted">Todavía no hay movimientos históricos registrados para este barril.</div>';
+
+       // Use the real stored sequence, not a same-day date sort, so lifecycle order is preserved.
+       const seq=(b.hist||[]).slice();
+       const ciclos=[];
+       let actual=null;
+       seq.forEach(ev=>{
+         if(ev.tipo==='Envasado'){
+           actual={n:ciclos.length+1,eventos:[ev]};
+           ciclos.push(actual);
+         }else if(actual){
+           actual.eventos.push(ev);
+         }
+       });
+
+       // Older data may have only current fields; if no real cycle exists, show one reconstructed cycle.
+       if(!ciclos.length && b.fechaLlenado){
+         actual={n:1,eventos:[]};
+         actual.eventos.push({tipo:'Envasado',fecha:b.fechaLlenado,detalle:[b.cerveza,b.lote?('Lote '+b.lote):'',b.fermentador].filter(Boolean).join(' · ')});
+         if(b.salida)actual.eventos.push({tipo:'Salida a cliente',fecha:b.salida,detalle:b.cliente||''});
+         if(b.retorno)actual.eventos.push({tipo:'Retorno',fecha:b.retorno,detalle:b.cliente||''});
+         if(b.ultimoLavado)actual.eventos.push({tipo:'Lavado',fecha:b.ultimoLavado,detalle:'Barril limpio y disponible'});
+         ciclos.push(actual);
+       }
+
+       const eventOf=(c,t)=>c.eventos.find(e=>e.tipo===t);
+       const currentCycle=ciclos[ciclos.length-1];
+       const currentIndex=currentCycle?currentCycle.n:0;
+
+       const statusToStep=()=>{
+         if(b.estado==='Limpio / disponible')return b.ultimoLavado?5:1;
+         if(b.estado==='Lleno')return 2;
+         if(b.estado==='En comercio')return 3;
+         if(b.estado==='Retornado / pendiente de lavado')return 4;
+         return 0;
+       };
+       const activeStep=statusToStep();
+
+       const card=(cls,title,ev,step,isCurrent,forcedDone=false)=>{
+         let state='pending';
+         if(isCurrent){
+           if(step<activeStep) state='done';
+           if(step===activeStep) state='active';
+           if(step>activeStep) state='pending';
+         }else{
+           state=(forcedDone||ev)?'done':'pending';
+         }
+         let fecha='—',detalle='Pendiente';
+         if(step===1){
+           fecha=ev?.fecha||'—';
+           detalle=(state==='done'||state==='active')?'Barril limpio / disponible':'Pendiente';
+         }else if(step===3 && ev){
+           fecha=ev.fecha||'—';
+           let diasTxt='';
+           if(ev.fecha){
+             const desde=new Date(ev.fecha+'T00:00:00');
+             const hasta=(ret&&ret.fecha)?new Date(ret.fecha+'T00:00:00'):new Date();
+             hasta.setHours(0,0,0,0);
+             const dias=Math.max(0,Math.floor((hasta-desde)/86400000));
+             diasTxt=` · ${dias} día${dias===1?'':'s'} fuera`;
+           }
+           detalle=(ev.detalle||'—')+diasTxt;
+         }else if(ev){
+           fecha=ev.fecha||'—';detalle=ev.detalle||'—';
+         }
+         return `<div class="stage-card ${cls} ${state}">
+           <div class="st-title">${step}. ${title}</div>
+           <div class="st-date">${fecha}</div>
+           <div class="st-detail">${detalle}</div>
+         </div>`;
+       };
+
+       return ciclos.map(c=>{
+         const env=eventOf(c,'Envasado');
+         let sal=eventOf(c,'Salida a cliente');
+         const ret=eventOf(c,'Retorno');
+         const lav=eventOf(c,'Lavado');
+
+         // V40: recuperación visual de salidas antiguas.
+         // Algunas pruebas previas guardaron Retorno/Lavado pero no dejaron
+         // la Salida dentro del ciclo. Si el ciclo está completo, usamos
+         // los datos históricos disponibles sin alterar el estado actual.
+         if(!sal && ret){
+           const clienteRec=(ret.detalle||b.cliente||'').split(' · ')[0].trim();
+           const fechaRec=(c.n===1 && b.salida)?b.salida:(env?.fecha||ret.fecha||'');
+           sal={tipo:'Salida a cliente',fecha:fechaRec,detalle:(clienteRec||'Comercio')+' · recuperado de historial previo'};
+         }
+         const isCurrent=c.n===currentIndex && b.estado!=='Limpio / disponible' ? true : (c.n===currentIndex && !lav);
+         const completed=!!lav;
+         const cleanStart={fecha:env?.fecha||b.fecha||'',detalle:'Barril limpio / disponible'};
+         return `<div class="cycle-visual ${isCurrent?'current':''}">
+           <div class="cycle-head">
+             <b>Ciclo ${c.n}${isCurrent?' · ACTUAL':''}</b>
+             <small>${completed?'Completo · lavado '+(lav?.fecha||''):'En curso'}</small>
+           </div>
+           <div class="stage-row">
+             ${card('stage-clean','Limpio / Disponible',cleanStart,1,isCurrent,true)}
+             <div class="stage-arrow">→</div>
+             ${card('stage-full','Lleno',env,2,isCurrent)}
+             <div class="stage-arrow">→</div>
+             ${card('stage-shop','En comercio',sal,3,isCurrent)}
+             <div class="stage-arrow">→</div>
+             ${card('stage-return','Retornado / sucio',ret,4,isCurrent)}
+             <div class="stage-arrow">→</div>
+             ${card('stage-wash','Lavado / limpio',lav,5,isCurrent)}
+           </div>
+           ${isCurrent?`<div class="cycle-note"><b>Estado actual:</b> ${b.estado}${b.estado==='En comercio'&&b.cliente?' · '+b.cliente:''}.</div>`:''}
+         </div>`;
+       }).join('');
+     })()}`;
+   $('cerrarHist').onclick=()=>{$('histBarril').style.display='none';};
+   const win=$('histBarril'),bar=$('histDrag');
+   let dragging=false,dx=0,dy=0;
+   const move=(ev)=>{
+     if(!dragging)return;
+     const p=ev.touches?ev.touches[0]:ev;
+     const maxX=Math.max(0,window.innerWidth-win.offsetWidth);
+     const maxY=Math.max(0,window.innerHeight-60);
+     win.style.left=Math.max(0,Math.min(maxX,p.clientX-dx))+'px';
+     win.style.top=Math.max(0,Math.min(maxY,p.clientY-dy))+'px';
+     win.style.transform='none';
+   };
+   const up=()=>{dragging=false;document.removeEventListener('mousemove',move);document.removeEventListener('mouseup',up);document.removeEventListener('touchmove',move);document.removeEventListener('touchend',up);};
+   const down=(ev)=>{
+     if(ev.target.closest('button'))return;
+     const p=ev.touches?ev.touches[0]:ev,r=win.getBoundingClientRect();
+     dx=p.clientX-r.left;dy=p.clientY-r.top;dragging=true;
+     document.addEventListener('mousemove',move);document.addEventListener('mouseup',up);
+     document.addEventListener('touchmove',move,{passive:false});document.addEventListener('touchend',up);
+     if(ev.cancelable)ev.preventDefault();
+   };
+   bar.addEventListener('mousedown',down);
+   bar.addEventListener('touchstart',down,{passive:false});
+ });
+ document.querySelectorAll('[data-cledit]').forEach(btn=>btn.onclick=()=>{
+   const i=+btn.dataset.cledit,x=s.cl[i];
+   window._clEdit=i;
+   $('clNom').value=x.n||'';
+   $('clCon').value=x.c||'';
+   $('clTel').value=x.tel||'';
+   $('clDir').value=x.dir||'';
+   $('clLoc').value=x.loc||'';
+   $('clRef').value=x.ref||'';
+   $('clMap').value=x.map||'';
+   $('clPlazo').value=x.plazo||'';
+   $('clObs').value=x.obs||'';
+   $('addCl').textContent='Guardar cambios';
+   $('cancelClEdit').style.display='inline-block';
+   $('clEditMsg').style.display='block';
+   $('clNom').focus();
+ });
+ document.querySelectorAll('[data-cldel]').forEach(btn=>btn.onclick=()=>{const i=+btn.dataset.cldel;if(s.b.some(b=>b.clienteIdx===i&&b.estado==='En comercio'))return alert('No se puede eliminar: hay barriles actualmente en este cliente.');if(confirm('¿Eliminar este cliente?')){s.cl.splice(i,1);s.b.forEach(b=>{if(Number.isInteger(b.clienteIdx)&&b.clienteIdx>i)b.clienteIdx--;});save();render();}});
+ $('tF').innerHTML=s.f.map((x,i)=>`<tr><td>${x.n}</td><td>${x.cap||'—'} L</td><td>${acts('f',i)}</td></tr>`).join('');
+ $('tC').innerHTML=s.c.map((x,i)=>`<tr><td>${x.n}</td><td>${x.d||'—'}</td><td>${acts('c',i)}</td></tr>`).join('');
+ $('tE').innerHTML=s.e.map((x,i)=>{const stockTxt=x.t==='Barril'?`${s.b.filter(b=>b.ei===i&&b.estado==='Limpio / disponible').length} (por padrón)`:x.stock;return `<tr><td>${x.t}</td><td>${x.n||'—'}</td><td>${x.cap} ${x.u}</td><td>${x.tara?x.tara+' g':'—'}</td><td>${stockTxt}</td><td>${acts('e',i)}</td></tr>`}).join('');
+ $('bModelo').innerHTML='<option value="">Elegir...</option>'+s.e.map((x,i)=>({x,i})).filter(o=>o.x.t==='Barril').map(o=>`<option value="${o.i}">${envLabel(o.x)}</option>`).join('');
+ $('tB').innerHTML=s.b.map((b,i)=>{const x=s.e[b.ei];return `<tr><td><b>${b.id}</b></td><td>${x?envLabel(x):'Modelo no disponible'}</td><td>${x?x.cap+' '+x.u:'—'}</td><td>${b.tara?b.tara+' g':'—'}</td><td>${b.estado}</td><td>${b.fecha||'—'}</td><td>${b.obs||'—'}</td><td><div class="actions"><button class="gray" data-bedit="${i}">Modificar</button><button class="${b.estado==='Fuera de servicio'?'green':'red'}" data-bstate="${i}">${b.estado==='Fuera de servicio'?'Reactivar':'Dar de baja'}</button></div></td></tr>`}).join('');
+ $('bTotal').textContent=s.b.length;
+ $('bDisp').textContent=s.b.filter(b=>b.estado==='Limpio / disponible').length;
+ $('bBaja').textContent=s.b.filter(b=>b.estado==='Fuera de servicio').length;
+ $('bUso').textContent=s.b.filter(b=>b.estado!=='Limpio / disponible'&&b.estado!=='Fuera de servicio').length;
+ document.querySelectorAll('[data-bedit]').forEach(btn=>btn.onclick=()=>{const i=+btn.dataset.bedit,b=s.b[i];let v=prompt('ID único:',b.id);if(v===null)return;v=v.trim().toUpperCase();if(!v)return alert('El ID no puede quedar vacío.');if(s.b.some((z,j)=>j!==i&&z.id===v))return alert('Ese ID ya existe.');b.id=v;v=prompt('Tara propia en gramos:',b.tara||'');if(v!==null)b.tara=Math.max(0,+v||0);v=prompt('Observaciones:',b.obs||'');if(v!==null)b.obs=v.trim();save();render();});
+ document.querySelectorAll('[data-bstate]').forEach(btn=>btn.onclick=()=>{
+ const i=+btn.dataset.bstate,b=s.b[i];
+ const react=b.estado==='Fuera de servicio';
+ b.estado=react?'Limpio / disponible':'Fuera de servicio';
+ addHist(b,react?'Reactivado':'Fuera de servicio',new Date().toISOString().slice(0,10),react?'Vuelve a disponible':'Barril dado de baja');
+ save();render();
+});
+ {
+   const prevF=$('mF').value;
+   $('mF').innerHTML='<option value="">Elegir...</option>'+s.f.map(x=>`<option value="${x.n}">${x.n} · ${fmtLitros(x.saldoActual||0)} L disp.</option>`).join('');
+   if(prevF && s.f.some(x=>x.n===prevF))$('mF').value=prevF;
+ }
+ $('mC').innerHTML='<option value="">Elegir...</option>'+s.c.map(x=>`<option>${x.n}${x.d?' - '+x.d:''}</option>`).join('');
+ $('mE').innerHTML='<option value="">Elegir...</option>'+s.e.map((x,i)=>{const st=x.t==='Barril'?s.b.filter(b=>b.ei===i&&b.estado==='Limpio / disponible').length:x.stock;return `<option value="${i}">${envLabel(x)} · stock ${st}</option>`}).join('');
+ document.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{const [k,i]=b.dataset.del.split(':');s[k].splice(+i,1);save();render()});
+ document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{const [k,i]=b.dataset.edit.split(':'),x=s[k][+i];
+   if(k==='f'){let v=prompt('Nombre:',x.n);if(v===null)return;x.n=v.trim()||x.n;v=prompt('Capacidad de referencia:',x.cap);if(v!==null)x.cap=Math.max(0,+v||0)}
+   if(k==='c'){let v=prompt('Nombre:',x.n);if(v===null)return;x.n=v.trim()||x.n;v=prompt('Detalle:',x.d);if(v!==null)x.d=v.trim()}
+   if(k==='e'){let v=prompt('Formato / descripción:',x.n);if(v===null)return;x.n=v.trim();v=prompt('Capacidad:',x.cap);if(v!==null&&+v>0)x.cap=+v;v=prompt('Tara en gramos:',x.tara);if(v!==null)x.tara=Math.max(0,+v||0);v=prompt('Stock:',x.stock);if(v!==null)x.stock=Math.max(0,Math.floor(+v||0))}
+   save();render();
+ });
+}
+$('addF').onclick=()=>{const n=$('fNom').value.trim();if(!n)return alert('Ingresá un nombre.');const cap=Math.max(0,+$('fCap').value||0);s.f.push({n,cap,saldoActual:cap});$('fNom').value='';$('fCap').value='';save();render()};
+$('addC').onclick=()=>{const n=$('cNom').value.trim();if(!n)return alert('Ingresá un producto.');s.c.push({n,d:$('cDet').value.trim()});$('cNom').value='';$('cDet').value='';save();render()};
+$('addE').onclick=()=>{const cap=+$('eCap').value;if(!(cap>0))return alert('Ingresá una capacidad.');s.e.push({t:$('eTipo').value,n:$('eNom').value.trim(),cap,u:$('eU').value,tara:Math.max(0,+$('eTara').value||0),stock:Math.max(0,Math.floor(+$('eStock').value||0))});$('eNom').value='';$('eCap').value='';$('eTara').value='';$('eStock').value='0';save();render()};
+let draft=[];
+function envLabel(x){
+ const tipo=(x.t||'').trim();
+ let nom=(x.n||'').trim();
+ const num=String(x.cap);
+ const unidad=(x.u||'').trim();
+
+ // Si el nombre ya empieza con el tipo, no lo repetimos.
+ if(nom.toLowerCase().startsWith(tipo.toLowerCase())){
+   nom=nom.slice(tipo.length).trim();
+ }
+
+ // Si el formato ya contiene la capacidad (ej. "473" o "473 ml"),
+ // no volvemos a escribir el número.
+ const tieneNumero=new RegExp(`(^|\\s)${num.replace('.','\\.')}($|\\s|ml|l)`, 'i').test(nom);
+ const tieneUnidad=new RegExp(`(^|\\s)${unidad}($|\\s)`, 'i').test(nom);
+
+ let partes=[tipo];
+ if(nom) partes.push(nom);
+
+ if(!tieneNumero){
+   partes.push(num);
+   if(unidad) partes.push(unidad);
+ }else if(!tieneUnidad && unidad){
+   partes.push(unidad);
+ }
+
+ return partes.join(' ').replace(/\s+/g,' ').trim();
+}
+function liters(x,q){return (x.u==='L'?x.cap:x.cap/1000)*q}
+function renderDraft(){
+ syncMovFromFerm();
+ const totalFlowL=draft.reduce((a,d)=>a+liters(s.e[d.ei],d.q),0);
+ const totalFlowU=draft.reduce((a,d)=>a+d.q,0);
+ const fFlow=s.f.find(z=>z.n===$('mF').value);
+ if(window.flowFermMain){
+   flowFermMain.textContent=fFlow?`${fFlow.n} · ${fmtLitros(fFlow.saldoActual||0)} L`:'—';
+   flowFermSub.textContent=fFlow?'Litros disponibles antes del envasado':'Elegí el fermentador de origen';
+   flowPackMain.textContent=`${fmtLitros(totalFlowL)} L`;
+   flowPackSub.textContent=totalFlowU?`${totalFlowU} envase${totalFlowU===1?'':'s'} preparado${totalFlowU===1?'':'s'}`:'Todavía no hay envases preparados';
+
+   const packCard=flowPackMain.closest('.flow-step');
+   const faltStock=draft.some(d=>{
+     const x=s.e[d.ei];
+     const disp=x.t==='Barril'
+       ? s.b.filter(b=>b.ei===d.ei && b.estado==='Limpio / disponible').length
+       : Number(x.stock||0);
+     return d.q>disp;
+   });
+   const faltBeer=fFlow && totalFlowL>Number(fFlow.saldoActual||0)+0.0001;
+
+   if(window.flowPackState){
+     packCard.classList.remove('flow-alert','flow-ok');
+     flowPackState.className='flow-state';
+     if(totalFlowU===0){
+       flowPackState.textContent='';
+     }else if(faltStock){
+       packCard.classList.add('flow-alert');
+       flowPackState.classList.add('bad');
+       flowPackState.textContent='Falta stock de envases';
+     }else if(faltBeer){
+       packCard.classList.add('flow-alert');
+       flowPackState.classList.add('bad');
+       flowPackState.textContent=`Faltan ${fmtLitros(totalFlowL-Number(fFlow.saldoActual||0))} L de cerveza`;
+     }else{
+       packCard.classList.add('flow-ok');
+       flowPackState.classList.add('ok');
+       flowPackState.textContent='Listo para confirmar';
+     }
+   }
+
+   const lote=$('mLote').value.trim();
+   flowLotMain.textContent=lote||'—';
+   flowLotSub.textContent=$('mC').value||'Se completa al confirmar';
+   flowDestMain.textContent='Fábrica';
+   flowDestSub.textContent='Los barriles llenos quedan en fábrica hasta la salida';
+ }
+
+ $('movDetail').style.display=draft.length?'block':'none';
+ $('tMov').innerHTML=draft.map((d,i)=>{const x=s.e[d.ei],disp=x.t==='Barril'?s.b.filter(b=>b.ei===d.ei&&b.estado==='Limpio / disponible').length:x.stock,ok=d.q<=disp;const ids=x.t==='Barril'?(d.bids||[]).join(', '):'—';return `<tr><td>${envLabel(x)}</td><td>${d.q}</td><td><b>${ids||'Elegir'}</b></td><td>${x.cap} ${x.u}</td><td>${fmtLitros(liters(x,d.q))} L</td><td class="${ok?'ok':'bad'}">${disp} disp.</td><td><div class="actions">${x.t==='Barril'?`<button class="green" data-sel="${i}">Elegir IDs</button>`:''}<button class="gray" data-md="${i}">Modificar</button><button class="red" data-rm="${i}">Quitar</button></div></td></tr>`}).join('');
+ $('movLitros').textContent=fmtLitros(draft.reduce((a,d)=>a+liters(s.e[d.ei],d.q),0))+' L';
+ $('movUnits').textContent=draft.reduce((a,d)=>a+d.q,0);
+ const req={};draft.forEach(d=>req[d.ei]=(req[d.ei]||0)+d.q);
+ const f=Object.entries(req).filter(([i,q])=>{const x=s.e[+i],disp=x.t==='Barril'?s.b.filter(b=>b.ei===+i&&b.estado==='Limpio / disponible').length:x.stock;return q>disp});
+ $('movStock').className=f.length?'bad':'ok';
+ $('movStock').textContent=f.length?f.map(([i,q])=>`Faltan ${q-(s.e[+i].t==='Barril'?s.b.filter(b=>b.ei===+i&&b.estado==='Limpio / disponible').length:s.e[+i].stock)} de ${envLabel(s.e[+i])}`).join(' | '):'Stock suficiente para confirmar';
+ const totalL=draft.reduce((a,d)=>a+liters(s.e[d.ei],d.q),0);
+ const fermSel=s.f.find(z=>z.n===$('mF').value);
+ let beerOk=false;
+ if(!fermSel){
+   $('movBeer').className='muted';
+   $('movBeer').textContent='Elegí un fermentador';
+ }else{
+   const dispBeer=Number(fermSel.saldoActual||0);
+   beerOk=totalL<=dispBeer+0.0001;
+   $('movBeer').className=beerOk?'ok':'bad';
+   $('movBeer').textContent=beerOk
+     ? `Cerveza suficiente · quedarían ${fmtLitros(dispBeer-totalL)} L`
+     : `Faltan ${fmtLitros(totalL-dispBeer)} L en ${fermSel.n}`;
+ }
+ $('confirmMov').disabled=!!f.length || !beerOk;
+ $('confirmMov').style.opacity=$('confirmMov').disabled?'.55':'1';
+ document.querySelectorAll('[data-sel]').forEach(btn=>btn.onclick=()=>{
+   const i=+btn.dataset.sel,d=draft[i],x=s.e[d.ei];
+   const ocupados=new Set(draft.flatMap((z,j)=>j===i?[]:(z.bids||[])));
+   const disponibles=s.b.filter(b=>b.ei===d.ei&&b.estado==='Limpio / disponible'&&!ocupados.has(b.id));
+   if(disponibles.length<d.q)return alert(`Solo hay ${disponibles.length} barriles individuales disponibles para elegir.`);
+   const lista=disponibles.map((b,j)=>`${j+1}. ${b.id} · tara ${b.tara||0} g`).join('\n');
+   let v=prompt(`Elegí ${d.q} barril(es) escribiendo los números separados por coma.\n\n${lista}\n\nEjemplo: 1,3`,(d.bids||[]).map(id=>disponibles.findIndex(b=>b.id===id)+1).filter(n=>n>0).join(','));
+   if(v===null)return;
+   const nums=[...new Set(v.split(',').map(z=>Math.floor(+z.trim())).filter(n=>n>=1&&n<=disponibles.length))];
+   if(nums.length!==d.q)return alert(`Tenés que elegir exactamente ${d.q} barril(es).`);
+   d.bids=nums.map(n=>disponibles[n-1].id);
+   renderDraft();
+ });
+ document.querySelectorAll('[data-rm]').forEach(b=>b.onclick=()=>{draft.splice(+b.dataset.rm,1);renderDraft()});
+ document.querySelectorAll('[data-md]').forEach(b=>b.onclick=()=>{
+   const i=+b.dataset.md,d=draft[i],actual=s.e[d.ei];
+   const opciones=s.e.map((x,j)=>`${j+1}. ${envLabel(x)} (stock ${x.stock})`).join('\n');
+   let elegido=prompt(`Envase actual: ${envLabel(actual)}\n\nElegí número de envase:\n${opciones}`,String(d.ei+1));
+   if(elegido===null)return;
+   const ni=Math.floor(+elegido)-1;
+   if(ni<0||ni>=s.e.length)return alert('Envase no válido.');
+   let nq=prompt('Cantidad:',String(d.q));
+   if(nq===null)return;
+   nq=Math.floor(+nq);
+   if(nq<1)return alert('Cantidad no válida.');
+   d.ei=ni;d.q=nq;if(s.e[ni].t==='Barril')d.bids=[];else delete d.bids;renderDraft();
+ });
+}
+$('addMov').onclick=()=>{
+ const ei=$('mE').value,q=Math.floor(+$('mQ').value||0);
+ if(!$('mF').value)return alert('Elegí un fermentador.');
+ const ff=s.f.find(f=>f.n===$('mF').value);
+ if(!ff||!ff.cervezaActual||!ff.loteActual||Number(ff.saldoActual||0)<=0)
+   return alert('Ese fermentador no tiene una elaboración activa completa. Entrá en “Ver ficha” y cargala primero.');
+ if(ei==='')return alert('Elegí un envase.');
+ if(q<1)return alert('Ingresá una cantidad válida.');
+ const d=draft.find(x=>x.ei===+ei);if(d){d.q+=q;if(s.e[+ei].t==='Barril')d.bids=[];}else draft.push({ei:+ei,q,bids:s.e[+ei].t==='Barril'?[]:undefined});
+ $('mQ').value=1;renderDraft();
+};
+$('cancelMov').onclick=()=>{if(confirm('¿Cancelar este envasado en preparación?')){draft=[];renderDraft()}};
+$('confirmMov').onclick=()=>{
+ const req={};draft.forEach(d=>req[d.ei]=(req[d.ei]||0)+d.q);
+ if(Object.entries(req).some(([i,q])=>{const x=s.e[+i],disp=x.t==='Barril'?s.b.filter(b=>b.ei===+i&&b.estado==='Limpio / disponible').length:x.stock;return q>disp}))return alert('No se puede confirmar: falta stock de envases.');
+ if(draft.some(d=>s.e[d.ei].t==='Barril'&&(!d.bids||d.bids.length!==d.q)))return alert('Antes de confirmar, elegí los IDs de todos los barriles que vas a llenar.');
+ const L=draft.reduce((a,d)=>a+liters(s.e[d.ei],d.q),0),U=draft.reduce((a,d)=>a+d.q,0);
+ const fechaEnv=$('mFecha').value||new Date().toISOString().slice(0,10);
+ const ferm=s.f.find(f=>f.n===$('mF').value);
+ const cervezaActual=ferm?.cervezaActual||'';
+ const loteActual=ferm?.loteActual||'';
+ if(!ferm)return alert('Elegí el fermentador.');
+ if(!cervezaActual||!loteActual)return alert('El fermentador no tiene una elaboración activa con cerveza y lote.');
+ const disponible=Number(ferm.saldoActual||0);
+ if(L>disponible+0.0001)return alert(`No alcanza la cerveza disponible en ${ferm.n}.\n\nDisponible: ${fmtLitros(disponible)} L\nA envasar: ${fmtLitros(L)} L\nFaltan: ${fmtLitros(L-disponible)} L`);
+ draft.forEach(d=>{const x=s.e[d.ei];if(x.t==='Barril'){(d.bids||[]).forEach(id=>{const b=s.b.find(z=>z.id===id);if(b){ensureHist(b);b.estado='Lleno';b.cerveza=cervezaActual;b.fermentador=$('mF').value;b.fechaLlenado=fechaEnv;b.lote=loteActual;addHist(b,'Envasado',fechaEnv,`${cervezaActual} · Lote ${loteActual} · ${$('mF').value}`);}});}else{x.stock-=d.q;}});
+ ferm.saldoActual=Number((disponible-L).toFixed(3));
+ ferm.envasadoActual=Number((Number(ferm.envasadoActual||0)+L).toFixed(3));
+ if(ferm.saldoActual<=0.0001){ferm.saldoActual=0;ferm.estadoFerm='Vacío / pendiente de lavado';}
+ else ferm.estadoFerm='Con elaboración';
+ if(!ferm.cervezaActual)ferm.cervezaActual=cervezaActual;
+ if(!ferm.loteActual)ferm.loteActual=loteActual;
+ s.prod.unshift({
+   id:'P-'+Date.now(),
+   fecha:fechaEnv,
+   lote:loteActual,
+   fermentador:$('mF').value,
+   cerveza:cervezaActual,
+   unidades:U,
+   litros:Number(L.toFixed(3)),
+   detalle:draft.map(d=>({ei:d.ei,q:d.q,bids:[...(d.bids||[])]}))
+ });
+ save();
+ const detalle=draft.map(d=>{const x=s.e[d.ei];return `<div style="padding:3px 0"><b>${d.q}</b> × ${envLabel(x)}${x.t==='Barril'&&d.bids?.length?` <span class="muted">[${d.bids.join(', ')}]</span>`:''} = <b>${fmtLitros(liters(x,d.q))} L</b></div>`}).join('');
+ $('lastMov').style.display='block';
+ $('lastMov').innerHTML=`<b>✓ Envasado confirmado</b><br><span>${$('mF').value} · ${cervezaActual} · Lote <b>${loteActual}</b> · ${fechaEnv}</span><div style="margin:7px 0">${detalle}</div><div style="border-top:1px solid #b9dfc5;padding-top:7px"><b>Total de envases: ${U}</b> &nbsp; · &nbsp; <b>Volumen total: ${fmtLitros(L)} L</b></div><div class="muted" style="margin-top:4px">El stock de envases vacíos fue descontado. · ${ferm.n} quedó con <b>${fmtLitros(ferm.saldoActual)} L</b>.</div>`;
+ draft=[];render();renderDraft();
+};
+$('mF').addEventListener('change',()=>{syncMovFromFerm();renderDraft();});
+$('mFecha').value=$('mFecha').value||new Date().toISOString().slice(0,10);
+$('bFecha').value=$('bFecha').value||new Date().toISOString().slice(0,10);
+$('addB').onclick=()=>{
+ const id=$('bId').value.trim().toUpperCase(),ei=$('bModelo').value;
+ if(!id)return alert('Ingresá un ID único, por ejemplo B001.');
+ if(s.b.some(b=>b.id===id))return alert('Ese ID ya existe.');
+ if(ei==='')return alert('Elegí el modelo de barril.');
+ s.b.push({id,ei:+ei,tara:Math.max(0,+$('bTara').value||0),fecha:$('bFecha').value,obs:$('bObs').value.trim(),estado:'Limpio / disponible'});
+ $('bId').value='';$('bTara').value='';$('bObs').value='';
+ save();render();
+};
+
+
+$('rFecha').value=$('rFecha').value||new Date().toISOString().slice(0,10);
+$('retBar').onclick=()=>{
+ const bi=$('rBar').value,fecha=$('rFecha').value;
+ if(bi==='')return alert('Elegí un barril que esté en un comercio.');
+ if(!fecha)return alert('Ingresá la fecha de retorno.');
+ const b=s.b[+bi];
+ if(!b||b.estado!=='En comercio')return alert('Ese barril ya no figura en un comercio.');
+ if(b.salida && fecha < b.salida)return alert('La fecha de retorno no puede ser anterior a la salida.');
+ ensureHist(b);b.retorno=fecha;b.retornoObs=$('rObs').value.trim();b.estado='Retornado / pendiente de lavado';addHist(b,'Retorno',fecha,`${b.cliente||'Cliente'}${b.retornoObs?' · '+b.retornoObs:''}`);
+ $('rObs').value='';
+ save();render();
+ alert(`${b.id} quedó retornado y pendiente de lavado.`);
+};
+
+const clearClientForm=()=>{
+ $('clNom').value='';$('clCon').value='';$('clTel').value='';$('clDir').value='';$('clLoc').value='';
+ $('clRef').value='';$('clMap').value='';$('clPlazo').value='';$('clObs').value='';
+ window._clEdit=null;$('addCl').textContent='Agregar cliente';$('cancelClEdit').style.display='none';$('clEditMsg').style.display='none';
+};
+$('cancelClEdit').onclick=()=>clearClientForm();
+$('addCl').onclick=()=>{
+ const n=$('clNom').value.trim();
+ if(!n)return alert('Ingresá el nombre del cliente o comercio.');
+ const data={n,c:$('clCon').value.trim(),tel:$('clTel').value.trim(),dir:$('clDir').value.trim(),
+   loc:$('clLoc').value.trim(),ref:$('clRef').value.trim(),map:$('clMap').value.trim(),
+   plazo:$('clPlazo').value.trim(),obs:$('clObs').value.trim()};
+ if(Number.isInteger(window._clEdit)){
+   s.cl[window._clEdit]={...s.cl[window._clEdit],...data};
+ }else{
+   s.cl.push(data);
+ }
+ save();clearClientForm();render();
+};
+$('sFecha').value=$('sFecha').value||new Date().toISOString().slice(0,10);
+$('sendBar').onclick=()=>{
+ const bi=$('sBar').value,ci=$('sCli').value,fecha=$('sFecha').value;
+ if(bi==='')return alert('Elegí un barril lleno.');
+ if(ci==='')return alert('Elegí un cliente.');
+ if(!fecha)return alert('Ingresá la fecha de salida.');
+ const b=s.b[+bi];
+ if(!b||b.estado!=='Lleno')return alert('Ese barril ya no está disponible como lleno.');
+ ensureHist(b);b.estado='En comercio';b.clienteIdx=+ci;b.cliente=s.cl[+ci]?.n||'';b.salida=fecha;b.salidaObs=$('sObs').value.trim();addHist(b,'Salida a cliente',fecha,`${b.cliente}${b.salidaObs?' · '+b.salidaObs:''}`);
+ $('sObs').value='';
+ save();render();
+ alert(`${b.id} quedó registrado en ${b.cliente}.`);
+};
+
+renderDraft();
+
+function syncMovFromFerm(){
+ const f=s.f.find(z=>z.n===$('mF').value);
+ if($('mCtxt')) $('mCtxt').value=f?.cervezaActual||'';
+ if($('mLotetxt')) $('mLotetxt').value=f?.loteActual||'';
+}
+
+let fermDetailIdx=null;
+function openFermDetail(i){
+  const f=s.f[i]; if(!f)return;
+  fermDetailIdx=i;
+  $('fermDetailTitle').textContent=`Ficha de ${f.n}`;
+  $('fdCap').textContent=`${fmtLitros(f.cap||0)} L`;
+  $('fdCarga').textContent=`${fmtLitros(f.cargaReal||0)} L`;
+  $('fdSaldo').textContent=`${fmtLitros(f.saldoActual||0)} L`;
+  $('fdEnvasado').textContent=`${fmtLitros(f.envasadoActual||0)} L`;
+  $('fdCerveza').textContent=f.cervezaActual||'—';
+  $('fdLote').textContent=f.loteActual||'—';
+  $('fdEstado').textContent=f.estadoFerm||'—';
+  $('fdInputLitros').value=Number(f.cargaReal||f.saldoActual||0);
+  $('fdInputLote').value=f.loteActual||'';
+  $('fdInputFecha').value=f.fechaCarga||new Date().toISOString().slice(0,10);
+  $('fdInputCerveza').innerHTML='<option value="">Elegir...</option>'+s.c.map(c=>`<option value="${c.n}">${c.n}</option>`).join('');
+  $('fdInputCerveza').value=f.cervezaActual||'';
+  const hp=(s.prod||[]).filter(p=>p.fermentador===f.n);
+  $('fdHist').innerHTML=hp.length?hp.map(p=>`<tr><td>${p.fecha||'—'}</td><td><b>${p.lote||'—'}</b></td><td>${p.cerveza||'—'}</td><td>${p.unidades||0}</td><td><b>${fmtLitros(p.litros||0)} L</b></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Sin producciones registradas.</td></tr>';
+  $('fermBackdrop').style.display='block';
+  $('fermDetail').style.display='block';
+}
+function closeFermDetail(){
+  $('fermBackdrop').style.display='none';
+  $('fermDetail').style.display='none';
+  fermDetailIdx=null;
+}
+$('fermClose').onclick=closeFermDetail;
+$('fermBackdrop').onclick=closeFermDetail;
+$('fdGuardar').onclick=()=>{
+  if(fermDetailIdx===null)return;
+  const f=s.f[fermDetailIdx];
+  const litros=Number(String($('fdInputLitros').value).replace(',','.'));
+  const cerveza=$('fdInputCerveza').value;
+  const lote=$('fdInputLote').value.trim();
+  if(!Number.isFinite(litros)||litros<=0)return alert('Ingresá litros reales mayores a 0.');
+  if(!cerveza)return alert('Elegí la cerveza / estilo.');
+  if(!lote)return alert('Ingresá el lote / producción.');
+  if(f.estadoFerm==='Vacío / pendiente de lavado')return alert('Primero registrá el lavado del fermentador.');
+  if(Number(f.saldoActual||0)>0 && f.loteActual && f.loteActual!==lote)
+    return alert('Este fermentador todavía tiene una elaboración activa. Terminála antes de cargar otra.');
+  f.cargaReal=Number(litros.toFixed(3));
+  f.saldoActual=f.cargaReal;
+  f.envasadoActual=0;
+  f.cervezaActual=cerveza;
+  f.loteActual=lote;
+  f.fechaCarga=$('fdInputFecha').value;
+  f.estadoFerm='Con elaboración';
+  f.histElab=f.histElab||[];
+  f.histElab.unshift({fecha:f.fechaCarga,lote,cerveza,litros:f.cargaReal,tipo:'Nueva elaboración'});
+  save();render();openFermDetail(fermDetailIdx);
+};
+$('fdLavar').onclick=()=>{
+  if(fermDetailIdx===null)return;
+  const f=s.f[fermDetailIdx];
+  if(Number(f.saldoActual||0)>0)return alert('Todavía queda cerveza en el fermentador. No se puede registrar lavado.');
+  f.estadoFerm='Disponible / limpio';
+  f.cervezaActual='';
+  f.loteActual='';
+  f.cargaReal=0;
+  f.envasadoActual=0;
+  f.fechaCarga='';
+  f.histElab=f.histElab||[];
+  f.histElab.unshift({fecha:new Date().toISOString().slice(0,10),tipo:'Lavado'});
+  save();render();openFermDetail(fermDetailIdx);
+};
+document.addEventListener('click',e=>{
+  const b=e.target.closest('[data-fdetail]');
+  if(b)openFermDetail(+b.dataset.fdetail);
+});
+
+render();
+
+</script></body></html>
